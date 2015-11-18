@@ -47,6 +47,13 @@
 #define CUP {1,0, 0,0, 266,0, 0,0, 0,237}
 #define CAP {1,0,266,0,0, 0,0,0,0,237}
 
+// The matrix for a merge is:
+// -1/sqrt[2]  0          1  0         0
+// 0           sqrt[2]    0  0         0
+// 0           0          0  sqrt[2]   0
+#define MERGE {255,0,1,0,0, 0,237,0,0,0, 0,0,0,237,0}
+#define SPLIT {255,0,0, 0,237,0, 1,0,0, 0,0,237, 0,0,0}
+
 #define BIFMAX 20 //largest fibonacci number we'll ever use
 #define MAX 6765  //MAX = fib(BIFMAX)
 #define MAXSTRING 1000 // longest string input
@@ -249,6 +256,8 @@ int main()
   int uncross[25] = UNCROSS;
   int cap[10] = CAP;
   int cup[10] = CUP;
+  int merge[15] = MERGE;
+  int split[25] = SPLIT;
   int i;
   int lines_processed = 0;
 
@@ -267,6 +276,7 @@ int main()
     {
       case ' ' : 
 	      break;
+      case 'i' :
       case '|' :
       case '/' :
       case '\\' :
@@ -299,6 +309,18 @@ int main()
 	      bif_next_cols = 5;
 	      tensor();
 	      break;
+      case 'h' :
+        next = merge;
+        bif_next_rows = 4;
+        bif_next_cols = 5;
+        tensor();
+        break;
+      case 'y' :
+        next = split;
+        bif_next_rows = 5;
+        bif_next_cols = 4;
+        tensor();
+        break;
       case ',' :
       case '\n' :
 	      if (lines_processed == 0)
