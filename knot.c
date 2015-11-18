@@ -1,6 +1,5 @@
 // C program to input an ascii picture of a tangle
 // and output the matrix it would compute in a Fibonacci quantum computer.
-// So far it can handle crossings and cups and caps.
 //
 // We work over the field of integers mod 521, with q=5,
 // chosen because we need q^5=-1 and q+q^-1 has a square root.
