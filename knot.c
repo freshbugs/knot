@@ -16,6 +16,8 @@
 // spaces are ignored
  
 // Example input:  |% , %| , |% , .
+//
+// git commit DOES NOT SEEM TO WORK
 
 #include <stdlib.h>
 #include <stdio.h>
