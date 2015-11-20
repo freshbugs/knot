@@ -22,36 +22,21 @@
 #include <string.h>
 
 #define MOD 521
-// Modulo 521
-// q=5
-// [2] = 422
-// sqrt[2] = 237
+#define Q 5
+#define QQ 25
+#define QQQ 125
+#define QQQQ 104
+#define PHI 422
+#define PHI_BAR 421
 
-// The fibonacci matrix for a crossing is:
-// -1/[2]       0     q^3/sqrt[2]  0     0
-// 0            -q^2  0            0     0
-// q^3/sqrt[2]  0     -q/[2]       0     0
-// 0            0     0            -q^2  0
-// 0            0     0            0     q^4
-// 
-#define CROSS {100,0,427,0,0, 0,496,0,0,0, 427,0,500,0,0, 0,0,0,496,0, 0,0,0,0,104}
-#define UNCROSS {100,0,123,0,0, 0,125,0,0,0, 123,0,20,0,0, 0,0,0,125,0, 0,0,0,0,516}
 
-// The matrix for a cup is:
-// 1         0
-// 0         0
-// 1/sqrt[2] 0
-// 0         0
-// 0         sqrt[2]
-#define CUP {1,0, 0,0, 266,0, 0,0, 0,237}
-#define CAP {1,0,266,0,0, 0,0,0,0,237}
 
-// The matrix for a merge is:
-// -1/sqrt[2]  0          1  0         0
-// 0           sqrt[2]    0  0         0
-// 0           0          0  sqrt[2]   0
-#define MERGE {255,0,1,0,0, 0,237,0,0,0, 0,0,0,237,0}
-#define SPLIT {255,0,0, 0,237,0, 1,0,0, 0,0,237, 0,0,0}
+#define CUP {1,0,  0,0,  PHI_BAR,0,  0,0,  0,1}
+#define CAP {1,0,1,0,0,  0,0,0,0,PHI}
+#define CROSS {MOD-PHI_BAR,0,MOD-QQ,0,0,    0,QQQ,0,0,0,    ((MOD-QQ)*PHI_BAR)%MOD,0,(QQQQ*PHI_BAR)%MOD,0,0,    0,0,0,QQQ,0,    0,0,0,0,MOD-Q}
+#define UNCROSS {MOD-PHI_BAR,0,QQQ,0,0,    0,MOD-QQ,0,0,0,    (QQQ*PHI_BAR)%MOD,0,((MOD-Q)*PHI_BAR)%MOD,0,0,    0,0,0,MOD-QQ,0,    0,0,0,0,QQQQ}
+#define MERGE {MOD-PHI_BAR,0,1,0,0,    0,1,0,0,0,    0,0,0,1,0}
+#define SPLIT {MOD-PHI_BAR,0,0,    0,1,0,    PHI_BAR,0,0,    0,0,1,    0,0,0}
 
 #define BIFMAX 20 //largest fibonacci number we'll ever use
 #define MAX 6765  //MAX = fib(BIFMAX)
