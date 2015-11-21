@@ -28,10 +28,8 @@
 
 #define CUP {1,0,  0,0,  PHI_INV,0,  0,0,  0,1}
 #define CAP {1,0,1,0,0,  0,0,0,0,PHI}
-#define CROSS {MOD-PHI_INV,0,MOD-QQ,0,0,    0,QQQ,0,0,0,    ((MOD-QQ)*PHI_INV)%MOD,0,(QQQQ*PHI_INV)%MOD,0,0,    0,0,0,QQQ,0,    0,0,0,0,MOD-Q}
 #define UNCROSS {MOD-PHI_INV,0,QQQ,0,0,    0,MOD-QQ,0,0,0,    (QQQ*PHI_INV)%MOD,0,((MOD-Q)*PHI_INV)%MOD,0,0,    0,0,0,MOD-QQ,0,    0,0,0,0,QQQQ}
 #define MERGE {MOD-PHI_INV,0,1,0,0,    0,1,0,0,0,    0,0,0,1,0}
-#define SPLIT {MOD-PHI_INV,0,0,    0,1,0,    PHI_INV,0,0,    0,0,1,    0,0,0}
 
 
 #define BIFMAX 20 //largest fibonacci number we'll ever use
@@ -69,11 +67,68 @@ void die(char* s)
   exit(0);
 }
 
+int * copy_array(int x[], int size)
+{
+  int i;
+  int * y;
+  y = malloc(size * sizeof(int));
+  for(i = 0; i < size; i++)
+  {
+    y[i] = x[i];
+  }
+  return(y);
+}
 
 void initialize()
 {
   int i;
   int j;
+
+  int cap[10] = 
+          {1,0,1,0,0,
+           0,0,0,0,PHI};
+  int cup[10] =
+          {1,        0,
+           0,        0,
+           PHI_INV,  0,
+           0,        0,
+           0,        1};
+  int cross[25] = 
+          {MOD-PHI_INV,            0,    MOD-QQ,             0,   0,
+           0,                      QQQ,  0,                  0,   0,
+           ((MOD-QQ)*PHI_INV)%MOD, 0,    (QQQQ*PHI_INV)%MOD, 0,   0,
+           0,                      0,    0,                  QQQ, 0,
+           0,                      0,    0,                  0,   MOD-Q};
+  int id[4] = 
+          {1,0,
+           0,1};
+  int split[15] =
+          {MOD-PHI_INV,  0,  0,
+           0,            1,  0,
+           PHI_INV,      0,  0,
+           0,            0,  1,
+           0,            0,  0};
+
+  //initialize mat[]
+  for(i = 0; i < 256; i++)
+  {
+    mat[i] = NULL;
+  }
+  mat['^'] = copy_array(cap,10);
+  bif_rows['^'] = 3;
+  bif_cols['^'] = 5;
+  mat['_'] = copy_array(cup,10);
+  bif_rows['_'] = 5;
+  bif_cols['_'] = 3;
+  mat['%'] = copy_array(cross,25);
+  bif_rows['%'] = 5;
+  bif_cols['%'] = 5;
+  mat['|'] = copy_array(id,4);
+  bif_rows['|'] = 4;
+  bif_cols['|'] = 4;
+  mat['4'] = copy_array(split,20);
+  bif_rows['4'] = 4;
+  bif_cols['4'] = 5;
 
   //initialize fib[]
   fib[0] = 0;
@@ -82,13 +137,6 @@ void initialize()
   {
     fib[i] = fib[i-1] + fib[i-2];
   }
-
-  //initialize mat[]
-  for(i = 0; i < 256; i++)
-  {
-    mat[i] = NULL;
-  }
-
 
   // Initialize fibword to the "fibonacci word" - see the comment when it was declared.
   fibword[0] = 0;
@@ -193,18 +241,6 @@ void multiply()
   bif_cols['!'] = bif_cols['@'];
 }
 
-int * copy_array(int x[], int size)
-{
-  int i;
-  int * y;
-  y = malloc(size * sizeof(int));
-  for(i = 0; i < size; i++)
-  {
-    y[i] = x[i];
-  }
-  return(y);
-}
-
 void tensor(int y[], int bif_y_r, int bif_y_c)
 // mat['@'] = mat['@'] fibonacci-tensor y
 {
@@ -257,69 +293,55 @@ void tensor(int y[], int bif_y_r, int bif_y_c)
 
 void exec_char(char c)
 {
-  int id[9] = {1,0,0, 0,1,0, 0,0,1};
-  int cross[25] = CROSS;
-  int uncross[25] = UNCROSS;
-  int cap[10] = CAP;
-  int cup[10] = CUP;
-  int merge[15] = MERGE;
-  int split[15] = SPLIT;
+  int bif_r;
+  int bif_c;
 
-  printf("Previous is %d by %d.\n",fib[bif_rows['!']],fib[bif_cols['!']]);
-  printf("Current is %d by %d.\n",fib[bif_rows['@']],fib[bif_cols['@']]);
-  printf("Executing %c.\n",c);
-  switch(c)
+  if (c == ' ')  //ignore spaces
   {
-    case ' ' : 
-      break;
-    case 'i' :
-    case '|' :
-    case '/' :
-    case '\\' :
-      tensor(id, 4, 4);
-      break;
-    case '%' :
-      tensor(cross, 5, 5);
-      break;
-    case '5' :
-      tensor(uncross, 5, 5);
-      break;
-    case 'u' :
-      tensor(cup, 5, 3);
-      break;
-    case 'n' :
-      tensor(cap, 3, 5);
-      break;
-    case 'h' :
-      tensor(merge, 4, 5);
-      break;
-    case 'y' :
-      tensor(split, 5, 4);
-      break;
-    case '\n' :
-      if (mat['!'] == NULL)
-      {
-        mat['!'] = mat['@'];
-	      bif_rows['!'] = bif_rows['@'];
-	      bif_cols['!'] = bif_cols['@'];
-	    }
-	    else
-      {
-	      multiply();
-	    }
-	    mat['@'] = NULL;
-	    break;
-    default :
-      if(('a' <= c) && (c <= 'z') && (mat[c] != NULL))
-      {
-        tensor(mat[c], bif_rows[c], bif_cols[c]);
-      }
-      else
-      {
-        die("unknown character.");
-      }
-	    break;
+    return;
+  }
+
+  if (c == '\n')
+  {
+    if ((mat['!'] == NULL) && (mat['@'] == NULL)) // 3rd carriage return
+    {
+      return;
     }
+    if (mat['@'] == NULL) // 2nd carriage return
+    {
+      mat['!'] = NULL;
+      return;
+    }
+    if (mat['!'] == NULL)
+    {
+      mat['!'] = mat['@'];
+	    bif_rows['!'] = bif_rows['@'];
+	    bif_cols['!'] = bif_cols['@'];
+      mat['@'] = NULL;
+      return;
+	  }
+	  multiply();
+	  mat['@'] = NULL;
+	  return;
+  }
+
+  if(('A' <= c) && (c <= 'Z'))
+  {
+    c += 'a' - 'A';
+    bif_r = bif_rows['!'];
+    bif_c = bif_cols['!'];
+    mat[c] = copy_array(mat['!'], fib[bif_r] * fib[bif_c]);
+    bif_rows[c] = bif_r;
+    bif_cols[c] = bif_c;
+    return;
+  }
+
+  if(mat[c] == NULL)
+  {
+    die("unknown character.");
+  }
+
+  tensor(mat[c], bif_rows[c], bif_cols[c]);
 }
 
 int main()
