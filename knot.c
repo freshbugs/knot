@@ -26,12 +26,6 @@
 #define PHI ((Q + MOD - QQQQ) % MOD)
 #define PHI_INV (PHI - 1)
 
-#define CUP {1,0,  0,0,  PHI_INV,0,  0,0,  0,1}
-#define CAP {1,0,1,0,0,  0,0,0,0,PHI}
-#define UNCROSS {MOD-PHI_INV,0,QQQ,0,0,    0,MOD-QQ,0,0,0,    (QQQ*PHI_INV)%MOD,0,((MOD-Q)*PHI_INV)%MOD,0,0,    0,0,0,MOD-QQ,0,    0,0,0,0,QQQQ}
-#define MERGE {MOD-PHI_INV,0,1,0,0,    0,1,0,0,0,    0,0,0,1,0}
-
-
 #define BIFMAX 20 //largest fibonacci number we'll ever use
 #define MAX 6765  //MAX = fib(BIFMAX)
 #define MAXSTRING 1000 // longest string input
@@ -72,6 +66,10 @@ int * copy_array(int x[], int size)
   int i;
   int * y;
   y = malloc(size * sizeof(int));
+  if(y == NULL)
+  {
+    die("malloc fail.");
+  }
   for(i = 0; i < size; i++)
   {
     y[i] = x[i];
@@ -85,39 +83,39 @@ void initialize()
   int j;
 
   int id[9] = 
-          {1,0,0,
-           0,1,0,
-           0,0,1};
+      {1,0,0,
+       0,1,0,
+       0,0,1};
   int cap[10] = 
-          {1,0,1,0,0,
-           0,0,0,0,PHI};
+      {1,0,1,0,0,
+       0,0,0,0,PHI};
   int cup[10] =
-          {1,        0,
-           0,        0,
-           PHI_INV,  0,
-           0,        0,
-           0,        1};
+      {1,        0,
+       0,        0,
+       PHI_INV,  0,
+       0,        0,
+       0,        1};
   int cross[25] = 
-          {MOD-PHI_INV,            0,    MOD-QQ,             0,   0,
-           0,                      QQQ,  0,                  0,   0,
-           ((MOD-QQ)*PHI_INV)%MOD, 0,    (QQQQ*PHI_INV)%MOD, 0,   0,
-           0,                      0,    0,                  QQQ, 0,
-           0,                      0,    0,                  0,   MOD-Q};
+      {MOD-PHI_INV,            0,    MOD-QQ,             0,   0,
+       0,                      QQQ,  0,                  0,   0,
+       ((MOD-QQ)*PHI_INV)%MOD, 0,    (QQQQ*PHI_INV)%MOD, 0,   0,
+       0,                      0,    0,                  QQQ, 0,
+       0,                      0,    0,                  0,   MOD-Q};
   int split[15] =
-          {MOD-PHI_INV,  0,  0,
-           0,            1,  0,
-           PHI_INV,      0,  0,
-           0,            0,  1,
-           0,            0,  0};
+      {MOD-PHI_INV,  0,  0,
+       0,            1,  0,
+       PHI_INV,      0,  0,
+       0,            0,  1,
+       0,            0,  0};
   int zero[4] =
-          {1,0,
-           0,0};
+      {1,0,
+       0,0};
   int one[4] =
-          {0,0,
-           0,1};
+      {0,0,
+       0,1};
   int q[4] =
-          {Q,0,
-           0,Q};
+      {Q,0,
+       0,Q};
 
   //initialize mat[]
   for(i = 0; i < 256; i++)
@@ -163,7 +161,7 @@ void initialize()
     fib[i] = fib[i-1] + fib[i-2];
   }
 
-  // Initialize fibword to the "fibonacci word" - see the comment when it was declared.
+  // fibword = the "fibonacci word" - see the comment when it was declared.
   fibword[0] = 0;
   fibword[1] = 1;
   for(i = 2; i < BIFMAX - 1; i++)
@@ -225,6 +223,10 @@ int * mat_prod(int x[], int xrows, int xcols, int y[], int yrows, int ycols)
   }
 
   z = malloc(xrows * ycols * sizeof(int));
+  if(z == NULL)
+  {
+    die("malloc fail.");
+  }
   for (i = 0; i < xrows; i++)
   {
     for (j = 0; j < ycols; j++)
@@ -327,6 +329,10 @@ void tensor(int y[], int bif_y_r, int bif_y_c)
   bif_r = bif_rows['@'] + bif_y_r - 3;
   bif_c = bif_cols['@'] + bif_y_c - 3;
   X = malloc(fib[bif_r] * fib[bif_c] * sizeof(int));
+  if(X == NULL)
+  {
+    die("malloc fail.");
+  }
 
   Xij = X;
   for(iX = 0; iX < fib[bif_rows['@']]; iX++)
@@ -341,7 +347,8 @@ void tensor(int y[], int bif_y_r, int bif_y_c)
             jY < (fibword[jX] ? fib[bif_y_c] : fib[bif_y_c - 1]);
             jY++)
         {
-          *Xij = mat['@'][iX * fib[bif_cols['@']] + jX] * y[iY * fib[bif_y_c] + jY];
+          *Xij = mat['@'][iX * fib[bif_cols['@']] + jX] *
+                        y[iY * fib[bif_y_c] + jY];
           *Xij %= MOD;
           Xij++;
         }
@@ -397,7 +404,7 @@ void exec_char(char c)
       {
         tensor(mat[c], bif_rows[c], bif_cols[c]);
       }
-      else if(('A' <= c) && (c <= 'Z'))  // upper-case means store mat['!'] in mat[lower-case]
+      else if(('A' <= c) && (c <= 'Z'))  // store mat['!'] in mat[lower-case]
       {
         if(mat['!'] == NULL)
         {
@@ -407,7 +414,8 @@ void exec_char(char c)
         {
           free(mat[c + 'a' - 'A']);
         }
-        mat[c + 'a' - 'A'] = copy_array(mat['!'], fib[bif_rows['!']] * fib[bif_cols['!']]);
+        mat[c + 'a' - 'A'] = copy_array(mat['!'], fib[bif_rows['!']] *
+                                                  fib[bif_cols['!']]);
         bif_rows[c + 'a' - 'A'] = bif_rows['!'];
         bif_cols[c + 'a' - 'A'] = bif_cols['!'];
       }
