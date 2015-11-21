@@ -279,9 +279,10 @@ void add()
   c = fib[bif_cols['!']];
   for(i = 0; i < r*c; i++)
   {
-    mat['!'][i] += mat['@'][i];
-    mat['!'][i] %= MOD;
+    mat['@'][i] += mat['!'][i];
+    mat['@'][i] %= MOD;
   }
+  mat['!'] = NULL;
 }
 
 int compare()
@@ -380,9 +381,8 @@ void exec_char(char c)
     case '*': //print mat['!']
       prettyprint(mat['!'], fib[bif_rows['!']], fib[bif_cols['!']]);
       break;
-    case '+': // add mat['@'] to mat['!']
+    case '+': // add mat['!'] to mat['@'], and set mat['!'] to NULL
       add();
-      mat['@'] = NULL;
       break;
     case '?': // compare mat['!'] mat['@']
       printf(compare() ? "\nYes, equal.\n" : "\nNo, not equal.\n");

@@ -1,6 +1,10 @@
-This C program inputs ascii text source code
+This program inputs ASCII text source code
 and does corresponding matrix computations.
-The source code is supposed to resemble an ascii
+Example use:
+
+  cat preamble.txt test.txt | ./a.out
+
+The source code is supposed to resemble an ASCII
 picture of a tangle, and the resulting matrix
 is the corresponding state change in a
 topological quantum computer with Fibonacci anyons.
@@ -32,11 +36,13 @@ The following characters have pre-assigned values.
 1    project the empty diagram to state 1
 9    q times the empty diagram
 
-Two other characters play apecial roles
+Two other characters play special roles
 !    the previous line
 @    the previous character
 
-Carriage return does the following.
+Here are the commands.
+
+Carriage return
   if M[@] is NULL then M[!] = NULL
   if M[!] is NULL then M[!] = M[@]
   if M[!] is not NULL then M[!] = M[!] times M[@]
@@ -49,9 +55,10 @@ Prettily print M[!]
 
 +
 Add
-  M[!] = M[!] + M[@]
-Give an error if either of these are NULL or
-the dimensions don't match.
+  M[@] = M[!] + M[@]
+  M[!] = NULL
+Give an error if either M[!] or M[@] are NULL or
+their dimensions don't match.
 
 ?
 Compare M[!] and M[@], and print a message to say
