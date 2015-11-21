@@ -48,21 +48,21 @@ int * mat[256];
 int bif_rows[256];
 int bif_cols[256];
 
-void freeall()
+void freeall(int **m, int size)
 {
   int i;
-  for(i = 0; i < 256; i++)
+  for(i = 0; i < size; i++)
   {
-    if(mat[i] != NULL)
+    if(m[i] != NULL)
     {
-      free(mat[i]);
+      free(m[i]);
     }
   }
 }
 
 void die(char* s)
 {
-  freeall();
+  freeall(mat,256);
   printf("ERROR: %s\n",s);
   exit(0);
 }
@@ -84,6 +84,10 @@ void initialize()
   int i;
   int j;
 
+  int id[9] = 
+          {1,0,0,
+           0,1,0,
+           0,0,1};
   int cap[10] = 
           {1,0,1,0,0,
            0,0,0,0,PHI};
@@ -99,36 +103,51 @@ void initialize()
            ((MOD-QQ)*PHI_INV)%MOD, 0,    (QQQQ*PHI_INV)%MOD, 0,   0,
            0,                      0,    0,                  QQQ, 0,
            0,                      0,    0,                  0,   MOD-Q};
-  int id[4] = 
-          {1,0,
-           0,1};
   int split[15] =
           {MOD-PHI_INV,  0,  0,
            0,            1,  0,
            PHI_INV,      0,  0,
            0,            0,  1,
            0,            0,  0};
+  int zero[4] =
+          {1,0,
+           0,1};
+  int one[4] =
+          {0,0,
+           0,1};
 
   //initialize mat[]
   for(i = 0; i < 256; i++)
   {
     mat[i] = NULL;
   }
+  mat['|'] = copy_array(id,9);
+  bif_rows['|'] = 4;
+  bif_cols['|'] = 4;
+  mat['\\'] = copy_array(id,9);
+  bif_rows['\\'] = 4;
+  bif_cols['\\'] = 4;
+  mat['/'] = copy_array(id,9);
+  bif_rows['/'] = 4;
+  bif_cols['/'] = 4;
   mat['^'] = copy_array(cap,10);
   bif_rows['^'] = 3;
   bif_cols['^'] = 5;
-  mat['_'] = copy_array(cup,10);
-  bif_rows['_'] = 5;
-  bif_cols['_'] = 3;
+  mat['6'] = copy_array(cup,10);
+  bif_rows['6'] = 5;
+  bif_cols['6'] = 3;
   mat['%'] = copy_array(cross,25);
   bif_rows['%'] = 5;
   bif_cols['%'] = 5;
-  mat['|'] = copy_array(id,4);
-  bif_rows['|'] = 4;
-  bif_cols['|'] = 4;
   mat['4'] = copy_array(split,20);
   bif_rows['4'] = 4;
   bif_cols['4'] = 5;
+  mat['0'] = copy_array(zero,4);
+  bif_rows['0'] = 3;
+  bif_cols['0'] = 3;
+  mat['1'] = copy_array(one,4);
+  bif_rows['1'] = 3;
+  bif_cols['1'] = 3;
 
   //initialize fib[]
   fib[0] = 0;
@@ -155,15 +174,15 @@ void initialize()
   }
 }
 
-void prettyprint()
+void prettyprint(int m[], int r, int c)
+// Print mat['!']
 {
   int i = 0;
   int j = 0;
-  int * A = mat['!'];
-  int r = fib[bif_rows['!']];
-  int c = fib[bif_cols['!']];
 
-  if(A == NULL)
+  printf("\n");
+
+  if(m == NULL)
   {
     printf("Tried to print a null pointer.\n");
     return;
@@ -179,7 +198,7 @@ void prettyprint()
     printf("[ ");
     for(j = 0; j < c; j++)
     {
-      printf("%5d ", *A++);
+      printf("%5d ", *m++);
     }
     printf("]\n");
   }
@@ -187,16 +206,13 @@ void prettyprint()
 }
 
 void multiply()
-// mat['!'] = mat['!'] times mat['@'] modulo MOD
+// mat['!'] = mat['!'] * mat['@'];
 {
   int *X;
   int *Xij;
   int i;
   int j;
   int x;
-  int r;
-  int mid;
-  int c;
 
   if (mat['@'] == NULL)
   {
@@ -217,20 +233,17 @@ void multiply()
     die("tried to multiply matrices with mismatched dimensions.");
   }
 
-  r = fib[bif_rows['!']];
-  mid = fib[bif_cols['!']];
-  c = fib[bif_cols['@']];
-  X = malloc(r * c * sizeof(int));
+  X = malloc(fib[bif_rows['!']] * fib[bif_cols['@']] * sizeof(int));
   Xij = X;
-  for(i = 0; i < r; i++)
+  for(i = 0; i < fib[bif_rows['!']]; i++)
   {
-    for(j = 0; j < c; j++)
+    for(j = 0; j < fib[bif_cols['@']]; j++)
     {
       *Xij = 0;
-      for(x = 0; x < mid; x++)
+      for(x = 0; x < fib[bif_cols['!']]; x++)
       {
         // add mat['!'][i,x]*mat['@'][x,j]
-        *Xij += mat['!'][i*mid + x] * mat['@'][x*c + j];
+        *Xij += mat['!'][i*fib[bif_cols['!']] + x] * mat['@'][x*fib[bif_cols['@']] + j];
 	      *Xij %= MOD;
       }
       Xij++;
@@ -296,23 +309,27 @@ void exec_char(char c)
   int bif_r;
   int bif_c;
 
+  printf("%c",c);
+
   if (c == ' ')  //ignore spaces
   {
     return;
   }
 
-  if (c == '\n')
+  if(c == '*')  //print the matrix mat['!']
   {
-    if ((mat['!'] == NULL) && (mat['@'] == NULL)) // 3rd carriage return
-    {
-      return;
-    }
-    if (mat['@'] == NULL) // 2nd carriage return
+    prettyprint(mat['!'], fib[bif_rows['!']], fib[bif_cols['!']]);
+    return;
+  }
+
+  if (c == '\n')  //carriage return
+  {
+    if (mat['@'] == NULL) // 2nd or subsequent carriage return
     {
       mat['!'] = NULL;
       return;
     }
-    if (mat['!'] == NULL)
+    if (mat['!'] == NULL) // end the first line of a paragraph
     {
       mat['!'] = mat['@'];
 	    bif_rows['!'] = bif_rows['@'];
@@ -320,14 +337,18 @@ void exec_char(char c)
       mat['@'] = NULL;
       return;
 	  }
-	  multiply();
+	  multiply();  //! = ! * @
 	  mat['@'] = NULL;
 	  return;
   }
 
-  if(('A' <= c) && (c <= 'Z'))
+  if(('A' <= c) && (c <= 'Z'))  // upper-case letter means store a variable
   {
     c += 'a' - 'A';
+    if(mat['!'] == NULL)
+    {
+      die("tried to assign NULL to a variable.");
+    }
     bif_r = bif_rows['!'];
     bif_c = bif_cols['!'];
     mat[c] = copy_array(mat['!'], fib[bif_r] * fib[bif_c]);
@@ -335,6 +356,7 @@ void exec_char(char c)
     bif_cols[c] = bif_c;
     return;
   }
+
 
   if(mat[c] == NULL)
   {
@@ -364,7 +386,6 @@ int main()
   {
     exec_char(tangle[i]);
   }
-  prettyprint();
-  freeall();
+  freeall(mat,256);
 }
  
