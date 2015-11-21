@@ -28,7 +28,8 @@
 
 #define BIFMAX 20 //largest fibonacci number we'll ever use
 #define MAX 6765  //MAX = fib(BIFMAX)
-#define MAXSTRING 1000 // longest string input
+#define MAXLINES 1000 //maximum number of lines of input
+#define MAXSTRING 10000 // longest string input
 
 int fib[BIFMAX + 1];  // fibonacci numbers
 int fibword[MAX];
@@ -74,7 +75,7 @@ int * copy_array(int x[], int size)
   {
     y[i] = x[i];
   }
-  return(y);
+  return y;
 }
 
 void initialize()
@@ -141,8 +142,8 @@ void initialize()
   bif_rows['%'] = 5;
   bif_cols['%'] = 5;
   mat['4'] = copy_array(split,20);
-  bif_rows['4'] = 4;
-  bif_cols['4'] = 5;
+  bif_rows['4'] = 5;
+  bif_cols['4'] = 4;
   mat['0'] = copy_array(zero,4);
   bif_rows['0'] = 3;
   bif_cols['0'] = 3;
@@ -370,6 +371,10 @@ void exec_char(char c)
 
   switch(c)
   {
+    case '.': //end
+      freeall(mat,256);
+      exit(1);
+      break;
     case ' ': //spaces are ignored
       break;
     case '*': //print mat['!']
@@ -377,6 +382,7 @@ void exec_char(char c)
       break;
     case '+': // add mat['@'] to mat['!']
       add();
+      mat['@'] = NULL;
       break;
     case '?': // compare mat['!'] mat['@']
       printf(compare() ? "\nYes, equal.\n" : "\nNo, not equal.\n");
@@ -386,13 +392,13 @@ void exec_char(char c)
       {
         mat['!'] = NULL;
       }
-      if (mat['!'] == NULL)
+      else if (mat['!'] == NULL)
       {
         mat['!'] = mat['@'];
 	      bif_rows['!'] = bif_rows['@'];
 	      bif_cols['!'] = bif_cols['@'];
 	    }
-      if (mat['!'] != NULL)
+      else
       {
 	      multiply();
       }
@@ -424,28 +430,40 @@ void exec_char(char c)
       }
       break;
   }
+//for debugging:
+//  printf("%d is %d by %d and %d is %d by %d\n",
+//      mat['!'], fib[bif_rows['!']], fib[bif_cols['!']],
+//      mat['@'], fib[bif_rows['@']], fib[bif_cols['@']]);
 }
 
 int main()
 {
+  int i;
   char tangle[MAXSTRING];
   char line[MAXSTRING];
 
-  int i;
-
   initialize();
+
   tangle[0]='\0';
   line[0]='\0';
-  while(line[0] != '.')
+  i = 0;
+  while(memchr(line, '.', strlen(line)) == NULL)
   {
     fgets(line, MAXSTRING, stdin);
+    if(strlen(tangle) + strlen(line) >= MAXSTRING)
+    {
+      die("input string too long - please end with a period.");
+    }
+    if(i++ == MAXLINES)
+    {
+      die("too many lines - please end with a period.");
+    }
     strcat(tangle,line);
   }
-
-  for(i = 0; tangle[i] != '.'; i++)
+  for(i = 0; i < strlen(tangle); i++)
   {
     exec_char(tangle[i]);
   }
-  freeall(mat,256);
+  die("somehow ran of the end of the input.");
 }
  
