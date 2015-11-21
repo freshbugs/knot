@@ -1,8 +1,7 @@
 // C program to input an ascii picture of a tangle
 // and output the matrix it would compute in a Fibonacci quantum computer.
 //
-// We work over the field of integers mod 521, with q=5,
-// chosen because we need q^5=-1 and q+q^-1 has a square root.
+// We work over the field of integers mod 521, with q=5, so q^5 = -1.
 // Basis vectors are enumerated by binary numbers with no consecutive 1's.
 // 
 // Input:
@@ -23,20 +22,20 @@
 
 #define MOD 521
 #define Q 5
-#define QQ 25
-#define QQQ 125
-#define QQQQ 104
-#define PHI 422
-#define PHI_BAR 421
 
+#define QQ ((Q * Q) % MOD)
+#define QQQ ((Q * QQ) % MOD)
+#define QQQQ ((Q * QQQ) % MOD)
+#define PHI ((Q + MOD - QQQQ) % MOD)
+#define PHI_INV (PHI - 1)
 
-
-#define CUP {1,0,  0,0,  PHI_BAR,0,  0,0,  0,1}
+#define CUP {1,0,  0,0,  PHI_INV,0,  0,0,  0,1}
 #define CAP {1,0,1,0,0,  0,0,0,0,PHI}
-#define CROSS {MOD-PHI_BAR,0,MOD-QQ,0,0,    0,QQQ,0,0,0,    ((MOD-QQ)*PHI_BAR)%MOD,0,(QQQQ*PHI_BAR)%MOD,0,0,    0,0,0,QQQ,0,    0,0,0,0,MOD-Q}
-#define UNCROSS {MOD-PHI_BAR,0,QQQ,0,0,    0,MOD-QQ,0,0,0,    (QQQ*PHI_BAR)%MOD,0,((MOD-Q)*PHI_BAR)%MOD,0,0,    0,0,0,MOD-QQ,0,    0,0,0,0,QQQQ}
-#define MERGE {MOD-PHI_BAR,0,1,0,0,    0,1,0,0,0,    0,0,0,1,0}
-#define SPLIT {MOD-PHI_BAR,0,0,    0,1,0,    PHI_BAR,0,0,    0,0,1,    0,0,0}
+#define CROSS {MOD-PHI_INV,0,MOD-QQ,0,0,    0,QQQ,0,0,0,    ((MOD-QQ)*PHI_INV)%MOD,0,(QQQQ*PHI_INV)%MOD,0,0,    0,0,0,QQQ,0,    0,0,0,0,MOD-Q}
+#define UNCROSS {MOD-PHI_INV,0,QQQ,0,0,    0,MOD-QQ,0,0,0,    (QQQ*PHI_INV)%MOD,0,((MOD-Q)*PHI_INV)%MOD,0,0,    0,0,0,MOD-QQ,0,    0,0,0,0,QQQQ}
+#define MERGE {MOD-PHI_INV,0,1,0,0,    0,1,0,0,0,    0,0,0,1,0}
+#define SPLIT {MOD-PHI_INV,0,0,    0,1,0,    PHI_INV,0,0,    0,0,1,    0,0,0}
+
 
 #define BIFMAX 20 //largest fibonacci number we'll ever use
 #define MAX 6765  //MAX = fib(BIFMAX)
@@ -49,35 +48,42 @@ int fibword[MAX];
   // (ie. strings of bits that have no adjacent ones, see A003714)
   // and fibword[i] is the last bit of the ith basis vector.
 
-int * prev;        // the matrix as it was at the previous carriage return of ascii input.
-int bif_prev_rows; // the number of rows in the "prev" matrix is fib[bif_prev_rows]
-int bif_prev_cols;
-int * curr;        // the current matrix
-int bif_curr_rows;
-int bif_curr_cols;
 int * next;
 int bif_next_rows;
 int bif_next_cols;
 
+int * mat[256];
+int bif_rows[256];
+int bif_cols[256];
+
 void die(char* s)
 {
-  printf("ERROR: %s\n",s);
-  free(prev);
-  free(curr);
-  free(next);
-  exit(0);
+  int i;
+  for(i = 0; i < 256; i++)
+  {
+    if(mat[i] != NULL)
+    {
+      free(mat[i]);
+    }
+  }
+  if(s[0] != 0)
+  {
+    printf("ERROR: %s\n",s);
+    exit(0);
+  }
+  exit(1);
 }
 
 void empty_curr()
-// set the curr matrix to represent the empty diagram
+// set the curr matrix mat['@'] to represent the empty diagram
 {
-  curr = malloc(4 * sizeof(int));
-  curr[0] = 1;
-  curr[1] = 0;
-  curr[2] = 0;
-  curr[3] = 1;
-  bif_curr_rows = 3;
-  bif_curr_cols = 3;
+  mat['@'] = malloc(4 * sizeof(int));
+  mat['@'][0] = 1;
+  mat['@'][1] = 0;
+  mat['@'][2] = 0;
+  mat['@'][3] = 1;
+  bif_rows['@'] = 3;
+  bif_cols['@'] = 3;
 }
 
 void initialize()
@@ -93,11 +99,18 @@ void initialize()
     fib[i] = fib[i-1] + fib[i-2];
   }
 
-  //initialize prev
-  prev = malloc(1 * sizeof(int));
-  prev[0] = 1;
-  bif_prev_rows = 1;
-  bif_prev_cols = 1;
+  //initialize mat[]
+  for(i = 0; i < 256; i++)
+  {
+    mat[i] = NULL;
+  }
+
+  //initialize mat['!']
+  mat['!'] = malloc(1 * sizeof(int));
+  mat['!'][0] = 1;
+  bif_cols['!'] = 1;
+  bif_rows['!'] = 1;
+
 
   empty_curr();
 
@@ -122,9 +135,9 @@ void prettyprint()
 {
   int i = 0;
   int j = 0;
-  int * A = prev;
-  int r = fib[bif_prev_rows];
-  int c = fib[bif_prev_cols];
+  int * A = mat['!'];
+  int r = fib[bif_rows['!']];
+  int c = fib[bif_cols['!']];
 
 
   if(r * c > 1000)
@@ -146,7 +159,7 @@ void prettyprint()
 }
 
 void multiply()
-// prev = prev * curr  (matrix multiplication modulo MOD).
+// mat['!'] *= curr  (matrix multiplication modulo MOD).
 {
   int *X;
   int *Xij;
@@ -158,14 +171,14 @@ void multiply()
   int m;
 
 
-  if (bif_prev_cols != bif_curr_rows)
+  if (bif_cols['!'] != bif_rows['@'])
   {
     die("tried to multiply matrices with mismatched dimensions.");
   }
-  m = fib[bif_prev_cols];
+  m = fib[bif_cols['!']];
 
-  r = fib[bif_prev_rows];
-  c = fib[bif_curr_cols];
+  r = fib[bif_rows['!']];
+  c = fib[bif_cols['@']];
   X = malloc(r * c * sizeof(int));
   Xij = X;
   for(i = 0; i < r; i++)
@@ -175,21 +188,21 @@ void multiply()
       *Xij = 0;
       for(x = 0; x < m; x++)
       {
-        // add prev[i,x]*curr[x,j]
-        *Xij += prev[i*m + x] * curr[x*c + j];
+        // add mat['!'][i,x]*mat['@'][x,j]
+        *Xij += mat['!'][i*m + x] * mat['@'][x*c + j];
 	      *Xij %= MOD;
       }
       Xij++;
     }
   }
-  free(prev);
-  prev = X;
-  bif_prev_cols = bif_curr_cols;
+  free(mat['!']);
+  mat['!'] = X;
+  bif_cols['!'] = bif_cols['@'];
   empty_curr();
 }
 
 void tensor()
-// curr = curr * next
+// mat['@'] = mat['@'] * next
 // where * is the "fibonacci tensor product"
 {
   int *X;
@@ -201,34 +214,34 @@ void tensor()
   int r;
   int c;
 
-  r = bif_curr_rows + bif_next_rows - 3;
-  c = bif_curr_cols + bif_next_cols - 3;
+  r = bif_rows['@'] + bif_next_rows - 3;
+  c = bif_cols['@'] + bif_next_cols - 3;
 
   X = malloc(fib[r] * fib[c] * sizeof(int));
   Xij = X;
-  for(icurr = 0; icurr < fib[bif_curr_rows]; icurr++)
+  for(icurr = 0; icurr < fib[bif_rows['@']]; icurr++)
   {
     for(inext = (fibword[icurr] ? fib[bif_next_rows - 1] : 0);
         inext < (fibword[icurr] ? fib[bif_next_rows] : fib[bif_next_rows - 1]);
 	      inext++)
     {
-      for(jcurr = 0; jcurr < fib[bif_curr_cols]; jcurr++)
+      for(jcurr = 0; jcurr < fib[bif_cols['@']]; jcurr++)
       {
         for(jnext = (fibword[jcurr] ? fib[bif_next_cols - 1] : 0);
             jnext < (fibword[jcurr] ? fib[bif_next_cols] : fib[bif_next_cols - 1]);
             jnext++)
         {
-          *Xij = curr[icurr * fib[bif_curr_cols] + jcurr] * next[inext * fib[bif_next_cols] + jnext];
+          *Xij = mat['@'][icurr * fib[bif_cols['@']] + jcurr] * next[inext * fib[bif_next_cols] + jnext];
           *Xij %= MOD;
           Xij++;
         }
       }
     }
   }
-  bif_curr_rows = r;
-  bif_curr_cols = c;      
-  free(curr);
-  curr = X;
+  bif_rows['@'] = r;
+  bif_cols['@'] = c;      
+  free(mat['@']);
+  mat['@'] = X;
 }
 
 int main()
@@ -309,9 +322,9 @@ int main()
       case '\n' :
 	      if (lines_processed == 0)
         {
-          prev = curr;
-	        bif_prev_rows = bif_curr_rows;
-	        bif_prev_cols = bif_curr_cols;
+          mat['!'] = mat['@'];
+	        bif_rows['!'] = bif_rows['@'];
+	        bif_cols['!'] = bif_cols['@'];
 	        empty_curr();
 	      }
 	      else
@@ -321,13 +334,21 @@ int main()
 	      lines_processed++;
 	      break;
       default :
-        printf("What do you mean by %c?\n",tangle[i]);
-        die("unknown character");
+        if(('a' <= tangle[i]) && (tangle[i] <= 'z') && (mat[tangle[i]] != NULL))
+        {
+          next = mat[tangle[i]];
+          bif_rows['!'] = bif_rows[tangle[i]];
+          bif_cols['!'] = bif_cols[tangle[i]];
+          tensor();
+        }
+        else
+        {
+          die("unknown character.");
+        }
 	      break;
       }
   }
   prettyprint();
-  free(prev);
-  free(curr);
+  die("");
 }
  
