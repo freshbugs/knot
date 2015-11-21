@@ -1,0 +1,75 @@
+This C program inputs ascii text source code
+and does corresponding matrix computations.
+The source code is supposed to resemble an ascii
+picture of a tangle, and the resulting matrix
+is the corresponding state change in a
+topological quantum computer with Fibonacci anyons.
+
+Every character of the source code is a self-contained command.
+Here is a short summary.
+
+[space]            ignored
+[carriage return]  multiply
+*                  print
++                  add
+?                  compare
+A..Z               store
+a..z|\/^6%4019     tensor
+
+Now for the details.
+
+The state is an array of matrices M[c],
+indexed by characters c.
+
+The following characters have pre-assigned values.
+
+|\/  the identity matrix
+^    a cap
+6    a cup
+%    a right-handed crossing
+4    split one particle into two
+0    project the empty diagram to state 0
+1    project the empty diagram to state 1
+9    q times the empty diagram
+
+Two other characters play apecial roles
+!    the previous line
+@    the previous character
+
+Carriage return does the following.
+  if M[@] is NULL then M[!] = NULL
+  if M[!] is NULL then M[!] = M[@]
+  if M[!] is not NULL then M[!] = M[!] times M[@]
+  M[@] = NULL
+Give an error if you try to multiply matrices
+whose dimensions don't match.
+
+*
+Prettily print M[!]
+
++
+Add
+  M[!] = M[!] + M[@]
+Give an error if either of these are NULL or
+the dimensions don't match.
+
+?
+Compare M[!] and M[@], and print a message to say
+whether they are equal.
+Give an error if their dimensions don't match.
+
+A..Z
+Store M[!] in the corresponding lower-case variable.
+For example, X does the following.
+  M[X] = M[!]
+Give an error if M[!] is NULL.
+
+a..z|\/^6%4019
+For any other character, tensor M[@] by that matrix.
+For example, x does the following.
+  if M[@] is NULL then M[@] = M[x]
+  else M[@] = M[@] tensor M[x]
+Give an error if M[x] is NULL.
+
+
+
