@@ -386,14 +386,13 @@ void exec_char(char c)
       {
         mat['!'] = NULL;
       }
-      else if (mat['!'] == NULL)
+      if (mat['!'] == NULL)
       {
         mat['!'] = mat['@'];
 	      bif_rows['!'] = bif_rows['@'];
 	      bif_cols['!'] = bif_cols['@'];
-        mat['@'] = NULL;
 	    }
-      else
+      if (mat['!'] != NULL)
       {
 	      multiply();
       }
