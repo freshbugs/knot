@@ -63,7 +63,7 @@ void freeall(int **m, int size)
 void die(char* s)
 {
   freeall(mat,256);
-  printf("ERROR: %s\n",s);
+  printf("\nERROR: %s\n",s);
   exit(0);
 }
 
@@ -111,10 +111,13 @@ void initialize()
            0,            0,  0};
   int zero[4] =
           {1,0,
-           0,1};
+           0,0};
   int one[4] =
           {0,0,
            0,1};
+  int q[4] =
+          {Q,0,
+           0,Q};
 
   //initialize mat[]
   for(i = 0; i < 256; i++)
@@ -148,6 +151,9 @@ void initialize()
   mat['1'] = copy_array(one,4);
   bif_rows['1'] = 3;
   bif_cols['1'] = 3;
+  mat['9'] = copy_array(q,4);
+  bif_rows['9'] = 3;
+  bif_cols['9'] = 3;
 
   //initialize fib[]
   fib[0] = 0;
@@ -165,10 +171,6 @@ void initialize()
     // Make a copy of the first fib[i] bits shifted by fib[i+1]
     for(j = 0; j < fib[i]; j++)
     {
-      if(fib[i + 1] + j >= MAX)
-      {
-        die("error initializing fibword");
-      }
       fibword[fib[i + 1] + j] = fibword[j];
     }
   }
@@ -205,53 +207,101 @@ void prettyprint(int m[], int r, int c)
   printf("\n");
 }
 
+int * mat_prod(int x[], int xrows, int xcols, int y[], int yrows, int ycols)
+{
+  int i;
+  int j;
+  int k;
+  int *z;
+
+  if (xcols != yrows)
+  {
+    die("tried to multiply matrices with mismatched dimensions.");
+  }
+
+  if ((x == NULL) || (y == NULL))
+  {
+    die("tried to matrix-multiply a null pointer.");
+  }
+
+  z = malloc(xrows * ycols * sizeof(int));
+  for (i = 0; i < xrows; i++)
+  {
+    for (j = 0; j < ycols; j++)
+    {
+      z[i * ycols + j] = 0;
+      for (k = 0; k < xcols; k++)
+      {
+        z[i * ycols + j] += x[i * xcols + k] * y[k * ycols + j];
+        z[i * ycols + j] %= MOD;
+      }
+    }
+  }
+  return z;
+}
+
+
 void multiply()
 // mat['!'] = mat['!'] * mat['@'];
 {
-  int *X;
-  int *Xij;
-  int i;
-  int j;
-  int x;
-
-  if (mat['@'] == NULL)
-  {
-    die("tried to multiply by a null pointer.");
-  }
+  int * temp;
 
   if (mat['!'] == NULL)
   {
     mat['!'] = mat['@'];
     bif_rows['!'] = bif_rows['@'];
     bif_cols['!'] = bif_cols['@'];
-    mat['@'] = NULL;
     return;
   }
 
-  if (bif_cols['!'] != bif_rows['@'])
-  {
-    die("tried to multiply matrices with mismatched dimensions.");
-  }
+  temp = mat_prod(mat['!'], fib[bif_rows['!']], fib[bif_cols['!']],
+                  mat['@'], fib[bif_rows['@']], fib[bif_cols['@']]);
+  free(mat['!']);
+  mat['!'] = temp;
+  bif_cols['!'] = bif_cols['@'];
+}
 
-  X = malloc(fib[bif_rows['!']] * fib[bif_cols['@']] * sizeof(int));
-  Xij = X;
-  for(i = 0; i < fib[bif_rows['!']]; i++)
+void add()
+// mat['!'] = mat['!'] + mat['@']
+{
+  int r;
+  int c;
+  int i;
+  if ((bif_rows['!'] != bif_rows['@']) ||
+      (bif_cols['!'] != bif_cols['@']))
   {
-    for(j = 0; j < fib[bif_cols['@']]; j++)
+    die("tried to add matrices with mismatched dimensions.");
+  }
+  r = fib[bif_rows['!']];
+  c = fib[bif_cols['!']];
+  for(i = 0; i < r*c; i++)
+  {
+    mat['!'][i] += mat['@'][i];
+    mat['!'][i] %= MOD;
+  }
+}
+
+int compare()
+// does mat['!'] equal mat['@']?
+{
+  int r;
+  int c;
+  int i;
+  if ((bif_rows['!'] != bif_rows['@']) ||
+      (bif_cols['!'] != bif_cols['@']))
+  {
+    die("tried to compare matrices with mismatched dimensions.");
+  }
+  r = fib[bif_rows['!']];
+  c = fib[bif_cols['!']];
+  for(i = 0; i < r*c; i++)
+  {
+    if(mat['!'][i] != mat['@'][i])
     {
-      *Xij = 0;
-      for(x = 0; x < fib[bif_cols['!']]; x++)
-      {
-        // add mat['!'][i,x]*mat['@'][x,j]
-        *Xij += mat['!'][i*fib[bif_cols['!']] + x] * mat['@'][x*fib[bif_cols['@']] + j];
-	      *Xij %= MOD;
-      }
-      Xij++;
+      return 0;
     }
   }
-  free(mat['!']);
-  mat['!'] = X;
-  bif_cols['!'] = bif_cols['@'];
+  return 1;
 }
 
 void tensor(int y[], int bif_y_r, int bif_y_c)
@@ -311,59 +361,62 @@ void exec_char(char c)
 
   printf("%c",c);
 
-  if (c == ' ')  //ignore spaces
+  switch(c)
   {
-    return;
+    case ' ': //spaces are ignored
+      break;
+    case '*': //print mat['!']
+      prettyprint(mat['!'], fib[bif_rows['!']], fib[bif_cols['!']]);
+      break;
+    case '+': // add mat['@'] to mat['!']
+      add();
+      break;
+    case '?': // compare mat['!'] mat['@']
+      printf(compare() ? "\nYes, equal.\n" : "\nNo, not equal.\n");
+      break;
+    case '\n': //multiply mat['!'] by mat['@']
+      if (mat['@'] == NULL)
+      {
+        mat['!'] = NULL;
+      }
+      else if (mat['!'] == NULL)
+      {
+        mat['!'] = mat['@'];
+	      bif_rows['!'] = bif_rows['@'];
+	      bif_cols['!'] = bif_cols['@'];
+        mat['@'] = NULL;
+	    }
+      else
+      {
+	      multiply();
+      }
+	    mat['@'] = NULL;
+	    break;
+    default:
+      if(mat[c] != NULL) //first try to tensor mat['@'] by mat[c]
+      {
+        tensor(mat[c], bif_rows[c], bif_cols[c]);
+      }
+      else if(('A' <= c) && (c <= 'Z'))  // upper-case means store mat['!'] in mat[lower-case]
+      {
+        if(mat['!'] == NULL)
+        {
+          die("tried to assign NULL to a variable.");
+        }
+        if(mat[c + 'a' - 'A'] != NULL)
+        {
+          free(mat[c + 'a' - 'A']);
+        }
+        mat[c + 'a' - 'A'] = copy_array(mat['!'], fib[bif_rows['!']] * fib[bif_cols['!']]);
+        bif_rows[c + 'a' - 'A'] = bif_rows['!'];
+        bif_cols[c + 'a' - 'A'] = bif_cols['!'];
+      }
+      else
+      {
+        die("unknown character.");
+      }
+      break;
   }
-
-  if(c == '*')  //print the matrix mat['!']
-  {
-    prettyprint(mat['!'], fib[bif_rows['!']], fib[bif_cols['!']]);
-    return;
-  }
-
-  if (c == '\n')  //carriage return
-  {
-    if (mat['@'] == NULL) // 2nd or subsequent carriage return
-    {
-      mat['!'] = NULL;
-      return;
-    }
-    if (mat['!'] == NULL) // end the first line of a paragraph
-    {
-      mat['!'] = mat['@'];
-	    bif_rows['!'] = bif_rows['@'];
-	    bif_cols['!'] = bif_cols['@'];
-      mat['@'] = NULL;
-      return;
-	  }
-	  multiply();  //! = ! * @
-	  mat['@'] = NULL;
-	  return;
-  }
-
-  if(('A' <= c) && (c <= 'Z'))  // upper-case letter means store a variable
-  {
-    c += 'a' - 'A';
-    if(mat['!'] == NULL)
-    {
-      die("tried to assign NULL to a variable.");
-    }
-    bif_r = bif_rows['!'];
-    bif_c = bif_cols['!'];
-    mat[c] = copy_array(mat['!'], fib[bif_r] * fib[bif_c]);
-    bif_rows[c] = bif_r;
-    bif_cols[c] = bif_c;
-    return;
-  }
-
-
-  if(mat[c] == NULL)
-  {
-    die("unknown character.");
-  }
-
-  tensor(mat[c], bif_rows[c], bif_cols[c]);
 }
 
 int main()
