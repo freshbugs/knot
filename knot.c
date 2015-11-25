@@ -374,6 +374,7 @@ void exec_char(char c)
   {
     case '.': //end
       freeall(mat,256);
+      printf("\nThe end.\n");
       exit(1);
       break;
     case ' ': //spaces are ignored

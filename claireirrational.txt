@@ -1,0 +1,54 @@
+| n |
+ % %
+ % %
+ % %
+| y |
+|  y
+C
+
+q         ||
+q         || +
+q         || +
+q         || +
+q         || +
+qqq       || +
+qqq       || +
+qqq       || +
+qqq       || +
+qqqqq     || +
+qqqqqqq   || +
+qqqqqqq   || +
+qqqqqqq   || +
+qqqqqqq   || +
+qqqqqqq   || +
+qqqqqqq   || +
+qqqqqqq   || +
+A
+
+| h
+y |
+T
+
+qq       t 
+qq       t +
+qq       t +
+qq       t +
+qq       t +
+qq       t +
+qq       t +
+qqqq     t +
+qqqqqq   t +
+qqqqqq   t +
+qqqqqq   t +
+qqqqqq   t +
+qqqqqqqq t +
+qqqqqqqq t +
+qqqqqqqq t +
+qqqqqqqq t +
+qqqqqqqq t +
+B
+
+a
+b +
+c?
+.
