@@ -1,0 +1,28 @@
+ \ n    ||
+  yn\   || 
+ //1\\  || 1
+|  % |  ||
+ %  %   ||
+|  % |  ||
+| / \|  ||
+|| n \\ ||
+||/n\ \\||
+||% % |% |
+||%1% %  %
+||% ||| %|
+|||u |||||
+|| u  ||||
+|  u   |||
+   u    ||
+n n     ||qqqqq
+u u     ||
+A
+
+y| 1
+un
+hu1+
+a?
+.
+
+This looks like an ampersand.
+It is sort of five-eighths of a Pauli-X gate.
