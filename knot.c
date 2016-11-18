@@ -282,6 +282,7 @@ void add()
     mat['@'][i] += mat['!'][i];
     mat['@'][i] %= MOD;
   }
+  free(mat['!']);
   mat['!'] = NULL;
 }
 
@@ -302,9 +303,13 @@ int compare()
   {
     if(mat['!'][i] != mat['@'][i])
     {
+      free(mat['!']);
+      mat['!'] = NULL;
       return 0;
     }
   }
+  free(mat['!']);
+  mat['!'] = NULL;
   return 1;
 }
 
@@ -385,7 +390,7 @@ void exec_char(char c)
     case '+': // add mat['!'] to mat['@'], and set mat['!'] to NULL
       add();
       break;
-    case '?': // compare mat['!'] mat['@']
+    case '?': // compare mat['!'] mat['@'], and set mat['!'] to NULL
       printf(compare() ? "\nYes, equal.\n" : "\nNo, not equal.\n");
       break;
     case '\n': //multiply mat['!'] by mat['@']
